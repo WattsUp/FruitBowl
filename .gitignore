@@ -1,0 +1,14 @@
+# Pre compiled headers
+.vscode/ipch
+
+# VS code files
+.vscode/settings.json
+
+# Build Executable
+debug
+release
+bin
+include/Ehbanana.lib
+
+# Log files
+*.log
