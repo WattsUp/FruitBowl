@@ -1,33 +1,34 @@
 #include "Result.h"
 
 /**
- * @brief Boolean not operator (test for failure)
+ * @brief Addition operator for appending a string
  *
- * @param result to test
- * @return result.code != ResultCode_t::SUCCESS
+ * @param left hand side - a result
+ * @param right hand side - a string to append
+ * @return Result_t combined result
  */
-inline bool operator!(const Result_t & result) {
-  return result.code != ResultCode_t::SUCCESS;
+Result_t operator+(const Result_t & left, const char * right) {
+  Result_t     result(left);
+  const char * leftStr = left.message;
+  if (leftStr == nullptr)
+    leftStr = Results::MESSAGES[static_cast<uint8_t>(result.code)];
+
+  size_t length =
+      strlen(leftStr) + 5 + strlen(right) + 1; // 5 for "\n  ->", 1 for '\0'
+  result.message = new char[length];
+  snprintf(result.message, length, "%s\n  ->%s", leftStr, right);
+  return result;
 }
 
 /**
- * @brief Boolean equality operator
+ * @brief Output stream insertion operator
  *
- * @param left hand side
- * @param right hand side
- * @return left.code == right.code
+ * @param stream to write to
+ * @param result to insert
+ * @return std::ostream& original stream
  */
-inline bool operator==(const Result_t & left, const Result_t & right) {
-  return left.code == right.code;
-}
-
-/**
- * @brief Boolean inequality operator
- *
- * @param left hand side
- * @param right hand side
- * @return left.code != right.code
- */
-inline bool operator!=(const Result_t & left, const Result_t & right) {
-  return left.code != right.code;
+std::ostream & operator<<(std::ostream & stream, const Result_t & result) {
+  if (result.message == nullptr)
+    return stream << Results::MESSAGES[static_cast<uint8_t>(result.code)];
+  return stream << result.message;
 }
