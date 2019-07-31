@@ -42,9 +42,20 @@ enum class ResultCode_t : uint8_t {
 enum ResultSeverity_t { INFO = 0, WARNING = 1, ERROR = 2, CRITICAL = 3 };
 #endif /* FRUIT_BOWL_NO_SEVERITY */
 
+/**
+ * @brief Holds an error code and message
+ * The message is empty (not using memory) until a custom message is set (by
+ * appending a string)
+ *
+ * The message is implemented as a shared pointer such that copying a result
+ * with a custom message does not copy the string. This makes the return code
+ * lightweight, not requiring returning a pointer to a result.
+ *
+ */
 struct Result_t {
-  ResultCode_t code    = ResultCode_t::SUCCESS;
-  char *       message = nullptr;
+  ResultCode_t code           = ResultCode_t::SUCCESS;
+  char *       message        = nullptr;
+  int16_t *    referenceCount = nullptr;
 
 #ifndef FRUIT_BOWL_NO_SEVERITY
   ResultSeverity_t severity = ResultSeverity_t::INFO;
@@ -52,36 +63,65 @@ struct Result_t {
 
   /**
    * @brief Construct a new Result_t object
+   * Create a new referenceCount equal to 1
    *
    * @param code to initialize
    */
-  Result_t(ResultCode_t code = ResultCode_t::SUCCESS) : code(code) {}
+  Result_t(ResultCode_t code = ResultCode_t::SUCCESS) :
+    code(code), referenceCount(new int16_t) {
+    *referenceCount = 1;
+  }
 
   /**
    * @brief Copy constructor
+   * Copy the values and increment referenceCount
    *
    * @param result to copy
    */
-  Result_t(const Result_t & result) {}
+  Result_t(const Result_t & result) :
+    code(result.code), message(result.message),
+    referenceCount(result.referenceCount) {
+    ++(*referenceCount);
+  }
 
   /**
    * @brief Assignment operator
+   * Decrement the left hand side and delete if zero references
+   * Set the left hand side to the right and increment its counter
    *
    * @param result to assign
    * @return Result_t&
    */
   Result_t & operator=(const Result_t & result) {
+    if (this != &result) {
+      if (referenceCount != nullptr && (--(*referenceCount)) <= 0) {
+        delete referenceCount;
+        delete message;
+      }
+      code           = result.code;
+      message        = result.message;
+      referenceCount = result.referenceCount;
+      ++(*referenceCount);
+    }
     return *this;
   }
 
   /**
    * @brief Destroy the Result_t object
+   * Decrement the reference counter and delete the memory if zero references
    *
    * Deletes the message string if present
    */
   ~Result_t() {
-    if (message != nullptr)
-      delete message;
+    if (referenceCount != nullptr) {
+      (*referenceCount)--;
+      if (*referenceCount <= 0) {
+        delete referenceCount;
+        delete message;
+        referenceCount = nullptr;
+        message        = nullptr;
+      }
+    }
   }
 
   /**
@@ -116,6 +156,17 @@ inline bool operator==(const Result_t & left, const Result_t & right) {
 }
 
 /**
+ * @brief Boolean equality operator
+ *
+ * @param left hand side
+ * @param right hand side
+ * @return left.code == right.code
+ */
+inline bool operator==(const Result_t & left, const ResultCode_t & right) {
+  return left.code == right;
+}
+
+/**
  * @brief Boolean inequality operator
  *
  * @param left hand side
@@ -126,7 +177,18 @@ inline bool operator!=(const Result_t & left, const Result_t & right) {
   return left.code != right.code;
 }
 
-Result_t operator+(const Result_t & left, const char * right);
+/**
+ * @brief Boolean inequality operator
+ *
+ * @param left hand side
+ * @param right hand side
+ * @return left.code != right.code
+ */
+inline bool operator!=(const Result_t & left, const ResultCode_t & right) {
+  return left.code != right;
+}
+
+const Result_t operator+(const Result_t & left, const char * right);
 
 /**
  * @brief Addition operator for appending a string
@@ -142,35 +204,6 @@ inline Result_t operator+(const Result_t & left, const std::string & right) {
 std::ostream & operator<<(std::ostream & stream, const Result_t & result);
 
 namespace Results {
-static const Result_t SUCCESS           = {ResultCode_t::SUCCESS};
-static const Result_t INVALID_FUNCTION  = {ResultCode_t::INVALID_FUNCTION};
-static const Result_t ACCESS_DENIED     = {ResultCode_t::ACCESS_DENIED};
-static const Result_t INVALID_DATA      = {ResultCode_t::INVALID_DATA};
-static const Result_t DISK_FULL         = {ResultCode_t::DISK_FULL};
-static const Result_t BAD_COMMAND       = {ResultCode_t::BAD_COMMAND};
-static const Result_t CRC               = {ResultCode_t::CRC};
-static const Result_t WRITE_FAULT       = {ResultCode_t::WRITE_FAULT};
-static const Result_t READ_FAULT        = {ResultCode_t::READ_FAULT};
-static const Result_t END_OF_FILE       = {ResultCode_t::END_OF_FILE};
-static const Result_t NOT_SUPPORTED     = {ResultCode_t::NOT_SUPPORTED};
-static const Result_t FILE_EXISTS       = {ResultCode_t::FILE_EXISTS};
-static const Result_t CANNOT_MAKE       = {ResultCode_t::CANNOT_MAKE};
-static const Result_t INVALID_PASSWORD  = {ResultCode_t::INVALID_PASSWORD};
-static const Result_t INVALID_PARAMETER = {ResultCode_t::INVALID_PARAMETER};
-static const Result_t OPEN_FAILED       = {ResultCode_t::OPEN_FAILED};
-static const Result_t BUFFER_OVERFLOW   = {ResultCode_t::BUFFER_OVERFLOW};
-static const Result_t DIR_NOT_EMPTY     = {ResultCode_t::DIR_NOT_EMPTY};
-static const Result_t BIND_FAILED       = {ResultCode_t::BIND_FAILED};
-static const Result_t INVALID_UTF8      = {ResultCode_t::INVALID_UTF8};
-static const Result_t UNKNOWN_HASH      = {ResultCode_t::UNKNOWN_HASH};
-static const Result_t UNKNOWN_REFERENCE = {ResultCode_t::UNKNOWN_REFERENCE};
-static const Result_t EXCEPTION_OCCURED = {ResultCode_t::EXCEPTION_OCCURED};
-static const Result_t UNDEFINED_PARENT  = {ResultCode_t::UNDEFINED_PARENT};
-static const Result_t INCOMPLETE        = {ResultCode_t::INCOMPLETE};
-static const Result_t NO_OPERATION      = {ResultCode_t::NO_OPERATION};
-static const Result_t TIMEOUT           = {ResultCode_t::TIMEOUT};
-static const Result_t NO_SYSTEM_CALL    = {ResultCode_t::NO_SYSTEM_CALL};
-static const Result_t INVALID_STATE     = {ResultCode_t::INVALID_STATE};
 
 // clang-format off
 static const char * MESSAGES[] = {

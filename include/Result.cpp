@@ -2,13 +2,22 @@
 
 /**
  * @brief Addition operator for appending a string
+ * Create a new result, set its code and severity to the left hand side
+ * Set the new result's message to the left's appended by the right string
+ * Return the new result
  *
  * @param left hand side - a result
  * @param right hand side - a string to append
  * @return Result_t combined result
  */
-Result_t operator+(const Result_t & left, const char * right) {
-  Result_t     result(left);
+const Result_t operator+(const Result_t & left, const char * right) {
+  Result_t result;
+  result.code = left.code;
+
+#ifndef FRUIT_BOWL_NO_SEVERITY
+  result.severity = left.severity;
+#endif /* FRUIT_BOWL_NO_SEVERITY */
+
   const char * leftStr = left.message;
   if (leftStr == nullptr)
     leftStr = Results::MESSAGES[static_cast<uint8_t>(result.code)];
