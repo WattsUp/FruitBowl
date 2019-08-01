@@ -104,10 +104,6 @@ const int16_t * Result::getReferenceCount() const {
 const Result operator+(const Result & left, const char * right) {
   Result result(left.getCode());
 
-#ifndef FRUIT_BOWL_NO_SEVERITY
-  result.severity = left.severity;
-#endif /* FRUIT_BOWL_NO_SEVERITY */
-
   // 5 for "\n  ->", 1 for '\0'
   size_t length = strlen(left.getMessage()) + 5 + strlen(right) + 1;
 
