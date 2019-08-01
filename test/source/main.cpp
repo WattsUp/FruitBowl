@@ -147,11 +147,103 @@ Result_t testResult(bool printPass = true) {
   return ResultCode_t::SUCCESS;
 }
 
+/**
+ * @brief Test the hash class
+ *
+ * @param printPass will print when cases are passing if true, only fails if
+ * false
+ * @return Result_t
+ */
+Result_t testHash(bool printPass = true) {
+  Hash hash;
+  if (hash.get() == 0xFFE40008) {
+    if (printPass)
+      std::cout << "[PASS] Get and finish hash works\n";
+  } else {
+    std::cout << "[FAIL] Get and finish hash does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  if (hash.get() == Hash::calculateHash("")) {
+    if (printPass)
+      std::cout << "[PASS] Calculate hash on empty string works\n";
+  } else {
+    std::cout << "[FAIL] Calculate hash on empty string does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  hash.add('!');
+  if (hash.get() == 0x49DD93B2) {
+    if (printPass)
+      std::cout << "[PASS] Add '!' works works\n";
+  } else {
+    std::cout << "[FAIL] Add '!' works does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  if (hash.get() == Hash::calculateHash("!")) {
+    if (printPass)
+      std::cout << "[PASS] Calculate hash on \"!\" string works\n";
+  } else {
+    std::cout << "[FAIL] Calculate hash on \"!\" string does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  hash.add("Hello world!");
+  if (hash.get() == Hash::calculateHash("!Hello world!")) {
+    if (printPass)
+      std::cout << "[PASS] Calculate hash on \"!Hello world!\" string works\n";
+  } else {
+    std::cout << "[FAIL] Calculate hash on \"!Hello world!\" string does not "
+                 "work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  if (hash.get() != Hash::calculateHash(" Hello world!")) {
+    if (printPass)
+      std::cout << "[PASS] \"!Hello world!\" vs \" Hello world!\" (1 bit flip) "
+                   "works\n";
+  } else {
+    std::cout << "[FAIL] \"!Hello world!\" vs \" Hello world!\" (1 bit flip) "
+                 "does not "
+                 "work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  std::string test = "!Hello world!EXTRASPACES";
+  Hash        hash2;
+  hash2.add(test.c_str(), (size_t)13);
+  if (hash2.get() == hash.get()) {
+    if (printPass)
+      std::cout << "[PASS] Calculate hash with length works\n";
+  } else {
+    std::cout << "[FAIL] Calculate hash with length does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  Hash hash3;
+  hash3.add(test.c_str(), 'E');
+  if (hash3.get() == hash.get()) {
+    if (printPass)
+      std::cout << "[PASS] Calculate hash with termination character works\n";
+  } else {
+    std::cout
+        << "[FAIL] Calculate hash with termination character does not work\n";
+    return ResultCode_t::UNKNOWN_HASH;
+  }
+
+  return ResultCode_t::SUCCESS;
+}
+
 int main() {
   std::cout << "Testing FruitBowl\n";
   Result_t result = testResult(true);
   if (!result)
     std::cout << "[FAIL] *** Result class does not pass ***\n";
+
+  result = testHash(true);
+  if (!result)
+    std::cout << "[FAIL] *** Hash class does not pass ***\n";
 
   return 0;
 }
