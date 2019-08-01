@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FORMAT_DIR="source/**/*.h source/**/*.cpp include/**/*.h test/source/**/*.h test/source/**/*.cpp"
+FORMAT_DIR="include/**/*.h include/**/*.cpp test/source/**/*.h test/source/**/*.cpp"
 
 NEEDS_FORMATTING=0
 
