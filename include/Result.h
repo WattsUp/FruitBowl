@@ -52,77 +52,16 @@ enum ResultSeverity_t { INFO = 0, WARNING = 1, ERROR = 2, CRITICAL = 3 };
  * lightweight, not requiring returning a pointer to a result.
  *
  */
-struct Result_t {
-  ResultCode_t code           = ResultCode_t::SUCCESS;
-  char *       message        = nullptr;
-  int16_t *    referenceCount = nullptr;
+class Result {
+public:
+  Result(ResultCode_t code = ResultCode_t::SUCCESS);
+  Result(const Result & result);
+  Result & operator=(const Result & result);
+  ~Result();
 
-#ifndef FRUIT_BOWL_NO_SEVERITY
-  ResultSeverity_t severity = ResultSeverity_t::INFO;
-#endif /* FRUIT_BOWL_NO_SEVERITY */
-
-  /**
-   * @brief Construct a new Result_t object
-   * Create a new referenceCount equal to 1
-   *
-   * @param code to initialize
-   */
-  Result_t(ResultCode_t code = ResultCode_t::SUCCESS) :
-    code(code), referenceCount(new int16_t) {
-    *referenceCount = 1;
-  }
-
-  /**
-   * @brief Copy constructor
-   * Copy the values and increment referenceCount
-   *
-   * @param result to copy
-   */
-  Result_t(const Result_t & result) :
-    code(result.code), message(result.message),
-    referenceCount(result.referenceCount) {
-    ++(*referenceCount);
-  }
-
-  /**
-   * @brief Assignment operator
-   * Decrement the left hand side and delete if zero references
-   * Set the left hand side to the right and increment its counter
-   *
-   * @param result to assign
-   * @return Result_t&
-   */
-  Result_t & operator=(const Result_t & result) {
-    if (this != &result) {
-      if (referenceCount != nullptr && (--(*referenceCount)) <= 0) {
-        delete referenceCount;
-        delete message;
-      }
-      code           = result.code;
-      message        = result.message;
-      referenceCount = result.referenceCount;
-      ++(*referenceCount);
-    }
-    return *this;
-  }
-
-  /**
-   * @brief Destroy the Result_t object
-   * Decrement the reference counter and delete the memory if zero references
-   *
-   * Deletes the message string if present
-   */
-  ~Result_t() {
-    if (referenceCount != nullptr) {
-      (*referenceCount)--;
-      if (*referenceCount <= 0) {
-        delete referenceCount;
-        delete message;
-        referenceCount = nullptr;
-        message        = nullptr;
-      }
-    }
-  }
+  ResultCode_t    getCode() const;
+  const char *    getMessage() const;
+  const int16_t * getReferenceCount() const;
 
   /**
    * @brief Bool cast operator (test for success)
@@ -132,6 +71,17 @@ struct Result_t {
   explicit inline operator bool() const {
     return code == ResultCode_t::SUCCESS;
   }
+
+  const friend Result operator+(const Result & left, const char * right);
+
+private:
+  ResultCode_t code           = ResultCode_t::SUCCESS;
+  char *       message        = nullptr;
+  int16_t *    referenceCount = nullptr;
+
+#ifndef FRUIT_BOWL_NO_SEVERITY
+  ResultSeverity_t severity = ResultSeverity_t::INFO;
+#endif /* FRUIT_BOWL_NO_SEVERITY */
 };
 
 /**
@@ -140,8 +90,18 @@ struct Result_t {
  * @param result to test
  * @return result.code != ResultCode_t::SUCCESS
  */
-inline bool operator!(const Result_t & result) {
-  return result.code != ResultCode_t::SUCCESS;
+inline bool operator!(const Result & result) {
+  return result.getCode() != ResultCode_t::SUCCESS;
+}
+
+/**
+ * @brief Boolean not operator (test for failure)
+ *
+ * @param code to test
+ * @return code != ResultCode_t::SUCCESS
+ */
+inline bool operator!(const ResultCode_t & code) {
+  return code != ResultCode_t::SUCCESS;
 }
 
 /**
@@ -151,8 +111,8 @@ inline bool operator!(const Result_t & result) {
  * @param right hand side
  * @return left.code == right.code
  */
-inline bool operator==(const Result_t & left, const Result_t & right) {
-  return left.code == right.code;
+inline bool operator==(const Result & left, const Result & right) {
+  return left.getCode() == right.getCode();
 }
 
 /**
@@ -160,10 +120,10 @@ inline bool operator==(const Result_t & left, const Result_t & right) {
  *
  * @param left hand side
  * @param right hand side
- * @return left.code == right.code
+ * @return left.code == right
  */
-inline bool operator==(const Result_t & left, const ResultCode_t & right) {
-  return left.code == right;
+inline bool operator==(const Result & left, const ResultCode_t & right) {
+  return left.getCode() == right;
 }
 
 /**
@@ -173,8 +133,8 @@ inline bool operator==(const Result_t & left, const ResultCode_t & right) {
  * @param right hand side
  * @return left.code != right.code
  */
-inline bool operator!=(const Result_t & left, const Result_t & right) {
-  return left.code != right.code;
+inline bool operator!=(const Result & left, const Result & right) {
+  return left.getCode() != right.getCode();
 }
 
 /**
@@ -182,13 +142,11 @@ inline bool operator!=(const Result_t & left, const Result_t & right) {
  *
  * @param left hand side
  * @param right hand side
- * @return left.code != right.code
+ * @return left.code != right
  */
-inline bool operator!=(const Result_t & left, const ResultCode_t & right) {
-  return left.code != right;
+inline bool operator!=(const Result & left, const ResultCode_t & right) {
+  return left.getCode() != right;
 }
-
-const Result_t operator+(const Result_t & left, const char * right);
 
 /**
  * @brief Addition operator for appending a string
@@ -197,11 +155,11 @@ const Result_t operator+(const Result_t & left, const char * right);
  * @param right hand side - a string to append
  * @return Result_t combined result
  */
-inline Result_t operator+(const Result_t & left, const std::string & right) {
+inline Result operator+(const Result & left, const std::string & right) {
   return left + right.c_str();
 }
 
-std::ostream & operator<<(std::ostream & stream, const Result_t & result);
+std::ostream & operator<<(std::ostream & stream, const Result & result);
 
 namespace Results {
 

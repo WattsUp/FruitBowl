@@ -5,11 +5,22 @@
 #include <sstream>
 #include <string>
 
-Result_t testRecursion(int n) {
+Result testRecursion(int n) {
   if (n == 0)
     return ResultCode_t::BUFFER_OVERFLOW + "Base case reached";
   else
     return testRecursion(n - 1) + ("n=" + std::to_string(n));
+}
+
+static Result lastErrorExternC;
+
+extern "C" ResultCode_t externCFunction() {
+  lastErrorExternC = testRecursion(8);
+  return lastErrorExternC.getCode();
+}
+
+extern "C" const char * getLastErrorExternC() {
+  return lastErrorExternC.getMessage();
 }
 
 /**
@@ -17,11 +28,11 @@ Result_t testRecursion(int n) {
  *
  * @param printPass will print when cases are passing if true, only fails if
  * false
- * @return Result_t
+ * @return Result
  */
-Result_t testResult(bool printPass = true) {
-  Result_t testResult;
-  if (testResult.referenceCount && *testResult.referenceCount == 1) {
+Result testResult(bool printPass = true) {
+  Result testResult;
+  if (testResult.getReferenceCount() && *testResult.getReferenceCount() == 1) {
     if (printPass)
       std::cout << "[PASS] Reference count is 1 after initialization\n";
   } else {
@@ -30,7 +41,7 @@ Result_t testResult(bool printPass = true) {
   }
 
   testResult = testResult;
-  if (testResult.referenceCount && *testResult.referenceCount == 1) {
+  if (testResult.getReferenceCount() && *testResult.getReferenceCount() == 1) {
     if (printPass)
       std::cout << "[PASS] Reference count is 1 after self assignment\n";
   } else {
@@ -38,8 +49,8 @@ Result_t testResult(bool printPass = true) {
     return ResultCode_t::INVALID_STATE;
   }
 
-  Result_t copy = testResult + "Append text";
-  if (copy.referenceCount && *copy.referenceCount == 1) {
+  Result copy = testResult + "Append text";
+  if (copy.getReferenceCount() && *copy.getReferenceCount() == 1) {
     if (printPass)
       std::cout << "[PASS] Reference count is 1 after appending string\n";
   } else {
@@ -47,7 +58,7 @@ Result_t testResult(bool printPass = true) {
     return ResultCode_t::INVALID_STATE;
   }
 
-  if (testResult.code == ResultCode_t::SUCCESS) {
+  if (testResult.getCode() == ResultCode_t::SUCCESS) {
     if (printPass)
       std::cout << "[PASS] Empty initializer is SUCCESS\n";
   } else {
@@ -144,6 +155,38 @@ Result_t testResult(bool printPass = true) {
     return ResultCode_t::INVALID_FUNCTION;
   }
 
+  if (!externCFunction()) {
+    if (printPass) {
+      std::cout << "[PASS] externCFunction works\n";
+    }
+  } else {
+    std::cout << "[FAIL] externCFunction does not work\n";
+    return ResultCode_t::INVALID_FUNCTION;
+  }
+
+  string.str("");
+  string.clear();
+  string << getLastErrorExternC();
+  if (string.str().compare("[0x11] The buffer exceeded its size\n"
+                           "  ->Base case reached\n"
+                           "  ->n=1\n"
+                           "  ->n=2\n"
+                           "  ->n=3\n"
+                           "  ->n=4\n"
+                           "  ->n=5\n"
+                           "  ->n=6\n"
+                           "  ->n=7\n"
+                           "  ->n=8") == 0) {
+    if (printPass) {
+      std::cout << "####\n" << testResult << "\n####\n";
+      std::cout << "[PASS] getLastError does work\n";
+    }
+  } else {
+    std::cout << "####\n" << string.str() << "\n####\n";
+    std::cout << "[FAIL] getLastError does not work\n";
+    return ResultCode_t::INVALID_FUNCTION;
+  }
+
   return ResultCode_t::SUCCESS;
 }
 
@@ -152,9 +195,9 @@ Result_t testResult(bool printPass = true) {
  *
  * @param printPass will print when cases are passing if true, only fails if
  * false
- * @return Result_t
+ * @return Result
  */
-Result_t testHash(bool printPass = true) {
+Result testHash(bool printPass = true) {
   Hash hash;
   if (hash.get() == 0xFFE40008) {
     if (printPass)
@@ -237,9 +280,12 @@ Result_t testHash(bool printPass = true) {
 
 int main() {
   std::cout << "Testing FruitBowl\n";
-  Result_t result = testResult(true);
+  Result result = testResult(true);
   if (!result)
     std::cout << "[FAIL] *** Result class does not pass ***\n";
+
+  // while (true)
+  //   result = testResult(false);
 
   result = testHash(true);
   if (!result)
