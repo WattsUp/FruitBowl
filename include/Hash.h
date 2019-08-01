@@ -10,9 +10,9 @@ class Hash {
 public:
   Hash();
 
-  void add(const char c);
-  void add(const char * c, const char end = '\0');
-  void add(const char * c, size_t length);
+  void   add(const char c);
+  void   add(const char * c, size_t length);
+  size_t add(const char * c, size_t length, const char end);
 
   /**
    * @brief Add a string to the hash
@@ -20,7 +20,7 @@ public:
    * @param string to hash
    */
   inline void add(const std::string & string) {
-    add(string.c_str());
+    add(string.c_str(), string.length());
   }
 
   const HashValue_t get() const;

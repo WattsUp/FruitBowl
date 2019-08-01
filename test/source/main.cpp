@@ -264,9 +264,9 @@ Result testHash(bool printPass = true) {
     return ResultCode_t::UNKNOWN_HASH;
   }
 
-  Hash hash3;
-  hash3.add(test.c_str(), 'E');
-  if (hash3.get() == hash.get()) {
+  Hash   hash3;
+  size_t length = hash3.add(test.c_str(), test.length(), 'E');
+  if (hash3.get() == hash.get() && length == 13) {
     if (printPass)
       std::cout << "[PASS] Calculate hash with termination character works\n";
   } else {

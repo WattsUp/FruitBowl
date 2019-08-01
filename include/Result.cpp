@@ -6,8 +6,7 @@
  *
  * @param code to initialize
  */
-Result::Result(ResultCode_t code) :
-  code(code), referenceCount(new int16_t) {
+Result::Result(ResultCode_t code) : code(code), referenceCount(new int16_t) {
   *referenceCount = 1;
 }
 

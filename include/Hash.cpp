@@ -19,16 +19,21 @@ void Hash::add(const char c) {
 }
 
 /**
- * @brief Add a character array until the termination character
+ * @brief Add a character array until the termination character or length number
+ * of characters
  *
  * @param c array to add
  * @param end character will stop and not hash this character
  */
-void Hash::add(const char * c, const char end) {
-  while (*c != end) {
+size_t Hash::add(const char * c, size_t length, const char end) {
+  size_t count = 0;
+  while (*c != end && length > 0) {
     add(*c);
+    --length;
     ++c;
+    ++count;
   }
+  return count;
 }
 
 /**
