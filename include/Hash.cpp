@@ -4,10 +4,65 @@
 
 /**
  * @brief Construct a new Hash:: Hash object
+ * Create a new referenceCount equal to 1
  *
- * Initializes the hash to all ones
+ * @param value to initialize the hash to
  */
-Hash::Hash() : value(0xFFFFFFFF) {}
+Hash::Hash(HashValue_t value) :
+  value(value), referenceCount(new int16_t), string(new std::string) {
+  *referenceCount = 1;
+}
+
+/**
+ * @brief Copy constructor
+ * Copy the values and increment referenceCount
+ *
+ * @param result to copy
+ */
+Hash::Hash(const Hash & hash) :
+  value(hash.value), string(hash.string), referenceCount(hash.referenceCount) {
+  ++(*referenceCount);
+}
+
+/**
+ * @brief Assignment operator
+ * Decrement the left hand side and delete if zero references
+ * Set the left hand side to the right and increment its counter
+ *
+ * @param hash to assign
+ * @return Hash&
+ */
+Hash & Hash::operator=(const Hash & hash) {
+  if (this != &hash) {
+    if (referenceCount != nullptr && (--(*referenceCount)) <= 0) {
+      delete referenceCount;
+      delete string;
+    }
+    value          = hash.value;
+    string         = hash.string;
+    referenceCount = hash.referenceCount;
+    ++(*referenceCount);
+  }
+  return *this;
+}
+
+/**
+ * @brief Destroy the Result object
+ * Decrement the reference counter and delete the memory if zero references
+ *
+ * Deletes the message string if present
+ */
+Hash::~Hash() {
+  if (referenceCount != nullptr) {
+    (*referenceCount)--;
+    if (*referenceCount <= 0) {
+      delete referenceCount;
+      delete string;
+      referenceCount = nullptr;
+      string         = nullptr;
+    }
+  }
+}
 
 /**
  * @brief Add a character to the hash
@@ -15,7 +70,7 @@ Hash::Hash() : value(0xFFFFFFFF) {}
  * @param c to add
  */
 void Hash::add(const char c) {
-  string.push_back(c);
+  string->push_back(c);
   value = calculateHash(value, c);
 }
 
@@ -84,7 +139,16 @@ const HashValue_t Hash::get() const {
  * @return const std::string &
  */
 const std::string & Hash::getString() const {
-  return string;
+  return *string;
+}
+
+/**
+ * @brief Get reference count, number of references to string
+ *
+ * @return int16_t
+ */
+const int16_t * Hash::getReferenceCount() const {
+  return referenceCount;
 }
 
 /**

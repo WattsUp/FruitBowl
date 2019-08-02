@@ -83,7 +83,7 @@ const char * Result::getMessage() const {
 }
 
 /**
- * @brief Get reference count, number of refernces to message string
+ * @brief Get reference count, number of references to message string
  *
  * @return int16_t
  */

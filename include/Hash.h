@@ -8,7 +8,10 @@ typedef uint32_t HashValue_t;
 
 class Hash {
 public:
-  Hash();
+  Hash(HashValue_t value = 0xFFFFFFFF);
+  Hash(const Hash & hash);
+  Hash & operator=(const Hash & hash);
+  ~Hash();
 
   void   add(const char c);
   void   add(const char * c, size_t length);
@@ -26,8 +29,10 @@ public:
 
   const HashValue_t   get() const;
   const std::string & getString() const;
-  const bool          isDone() const;
-  void                setDone(const bool done);
+  const int16_t *     getReferenceCount() const;
+
+  const bool isDone() const;
+  void       setDone(const bool done);
 
   /**
    * @brief Calculate the hash from a string
@@ -87,9 +92,10 @@ private:
     return hash;
   }
 
-  HashValue_t value;
-  std::string string;
-  bool        hashingDone = false;
+  HashValue_t   value;
+  std::string * string;
+  int16_t *     referenceCount = nullptr;
+  bool          hashingDone    = false;
 };
 
 #endif /* _FB_HASH_H_ */
