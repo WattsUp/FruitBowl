@@ -8,32 +8,41 @@ typedef uint32_t HashValue_t;
 
 class Hash {
 public:
-  Hash();
+  Hash(HashValue_t value = 0xFFFFFFFF);
+  Hash(const Hash & hash);
+  Hash & operator=(const Hash & hash);
+  ~Hash();
 
   void   add(const char c);
   void   add(const char * c, size_t length);
   size_t add(const char * c, size_t length, const char end);
+  size_t add(const unsigned char * c, size_t length, const char end);
 
   /**
    * @brief Add a string to the hash
    *
-   * @param string to hash
+   * @param str to hash
    */
-  inline void add(const std::string & string) {
-    add(string.c_str(), string.length());
+  inline void add(const std::string & str) {
+    add(str.c_str(), str.length());
   }
 
-  const HashValue_t get() const;
+  const HashValue_t   get() const;
+  const std::string & getString() const;
+  const int16_t *     getReferenceCount() const;
+
+  const bool isDone() const;
+  void       setDone(const bool done);
 
   /**
    * @brief Calculate the hash from a string
    *
-   * @param string to hash
+   * @param str to hash
    * @return HashValue_t hash
    */
-  static HashValue_t calculateHash(const std::string & string) {
+  static HashValue_t calculateHash(const std::string & str) {
     HashValue_t hash = 0xFFFFFFFF;
-    for (char c : string) {
+    for (char c : str) {
       hash = calculateHash(hash, c);
     }
     return finishHash(hash);
@@ -83,7 +92,10 @@ private:
     return hash;
   }
 
-  HashValue_t value;
+  HashValue_t   value;
+  std::string * string;
+  int16_t *     referenceCount = nullptr;
+  bool          hashingDone    = false;
 };
 
 #endif /* _FB_HASH_H_ */

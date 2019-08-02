@@ -1,6 +1,7 @@
 #include <FruitBowl.h>
 #include <Result.h>
 
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -199,6 +200,41 @@ Result testResult(bool printPass = true) {
  */
 Result testHash(bool printPass = true) {
   Hash hash;
+  if (hash.getReferenceCount() && *hash.getReferenceCount() == 1) {
+    if (printPass)
+      std::cout << "[PASS] Reference count is 1 after initialization\n";
+  } else {
+    std::cout << "[FAIL] Reference count is not 1 after initialization\n";
+    return ResultCode_t::INVALID_STATE;
+  }
+
+  hash = hash;
+  if (hash.getReferenceCount() && *hash.getReferenceCount() == 1) {
+    if (printPass)
+      std::cout << "[PASS] Reference count is 1 after self assignment\n";
+  } else {
+    std::cout << "[FAIL] Reference count is not 1 after self assignment\n";
+    return ResultCode_t::INVALID_STATE;
+  }
+
+  Hash * copy = new Hash(hash);
+  if (hash.getReferenceCount() && *hash.getReferenceCount() == 2) {
+    if (printPass)
+      std::cout << "[PASS] Reference count is 2 after assignment\n";
+  } else {
+    std::cout << "[FAIL] Reference count is not 2 after assignment\n";
+    return ResultCode_t::INVALID_STATE;
+  }
+
+  delete copy;
+  if (hash.getReferenceCount() && *hash.getReferenceCount() == 1) {
+    if (printPass)
+      std::cout << "[PASS] Reference count is 1 after deleting copy\n";
+  } else {
+    std::cout << "[FAIL] Reference count is not 1 after deleting copy\n";
+    return ResultCode_t::INVALID_STATE;
+  }
+
   if (hash.get() == 0xFFE40008) {
     if (printPass)
       std::cout << "[PASS] Get and finish hash works\n";
