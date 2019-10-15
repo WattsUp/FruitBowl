@@ -80,6 +80,7 @@ void Hash::add(const char c) {
  *
  * @param c array to add
  * @param end character will stop and not hash this character
+ * @return size_t number of characters read
  */
 size_t Hash::add(const char * c, size_t length, const char end) {
   size_t count = 0;
@@ -98,6 +99,7 @@ size_t Hash::add(const char * c, size_t length, const char end) {
  *
  * @param c array to add
  * @param end character will stop and not hash this character
+ * @return size_t number of characters read
  */
 size_t Hash::add(const unsigned char * c, size_t length, const char end) {
   size_t count = 0;
